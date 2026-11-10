@@ -1,0 +1,180 @@
+<%- include('partials/header', { loggedIn: true }) %>
+<%
+  const fmt = (n) => {
+    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    let i = 0;
+    while (n >= 1024 && i < units.length - 1) { n /= 1024; i++; }
+    return (i === 0 ? n : n.toFixed(2)) + ' ' + units[i];
+  };
+%>
+<main class="container">
+
+  <% if (dataDirWarning) { %>
+    <div class="notice warn">
+      <strong>No Volume attached.</strong> Settings, secret and statistics are lost on every redeploy.
+      Add a Railway Volume mounted at <code>/app/data</code>.
+    </div>
+  <% } %>
+  <% if (flash) { %>
+    <div class="notice <%= flash.type %>"><%= flash.message %></div>
+  <% } %>
+
+  <section class="card">
+    <div class="card-head">
+      <h2>Connection</h2>
+      <span class="badge <%= active.enabled ? 'on' : 'off' %>"><%= active.enabled ? 'Active' : 'Disabled' %> &middot; <%= labels[active.mode] %></span>
+    </div>
+
+    <% if (active.tcpMissing) { %>
+      <div class="notice warn">
+        <strong>No Railway TCP Proxy found.</strong> In Railway open this service, go to Settings &rarr; Networking
+        &rarr; TCP Proxy and add it with application port <code><%= proxyPort %></code>. Then redeploy.
+      </div>
+    <% } %>
+
+    <% if (active.link) { %>
+      <p class="link-box" id="proxy-link"><%= active.link %></p>
+      <div class="btn-row">
+        <a class="btn btn-accent" href="<%= active.link %>">Open in Telegram</a>
+        <button type="button" class="btn" data-copy="<%= active.link %>">Copy link</button>
+        <button type="button" class="btn" id="open-qr" data-link="<%= active.link %>">QR code</button>
+      </div>
+    <% } else { %>
+      <p class="muted">Telegram has no link for this protocol. In Telegram Desktop open Settings &rarr; Advanced
+        &rarr; Connection type &rarr; Use custom proxy, choose HTTP and enter the values below.</p>
+    <% } %>
+
+    <dl class="fields">
+      <% active.fields.forEach(function (f) { %>
+        <div class="field">
+          <dt><%= f.label %></dt>
+          <dd><code><%= f.value %></code> <button type="button" class="btn btn-small" data-copy="<%= f.value %>">Copy</button></dd>
+        </div>
+      <% }) %>
+    </dl>
+  </section>
+
+  <section class="card">
+    <div class="card-head"><h2>Protocol</h2></div>
+    <form method="POST" action="<%= panelPath %>/settings/mode">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+      <div class="mode-list" role="radiogroup" aria-label="Active protocol">
+        <% modes.forEach(function (m) { %>
+          <label class="mode-option">
+            <input type="radio" name="mode" value="<%= m %>" <%= settings.mode === m ? 'checked' : '' %> />
+            <span class="mode-body">
+              <strong><%= labels[m] %></strong>
+              <small><%= hints[m] %></small>
+            </span>
+          </label>
+        <% }) %>
+      </div>
+      <label class="switch-row">
+        <input type="checkbox" name="enabled" value="1" <%= settings.enabled ? 'checked' : '' %> />
+        <span>Proxy enabled</span>
+      </label>
+      <p class="muted">Only one protocol runs at a time. Applying disconnects everyone who is connected.</p>
+      <button type="submit" class="btn btn-accent">Apply</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <div class="card-head"><h2>Secret</h2></div>
+    <p class="muted">Used by the Web proxy and MTProto. Changing it invalidates every existing link.</p>
+    <form method="POST" action="<%= panelPath %>/settings/secret">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+      <label for="secret">Secret (32 hex characters)</label>
+      <input type="text" id="secret" name="secret" value="<%= settings.secret %>" maxlength="32" spellcheck="false" autocomplete="off" class="mono" />
+      <div class="btn-row">
+        <button type="submit" name="action" value="save" class="btn btn-accent">Save</button>
+        <button type="submit" name="action" value="regenerate" class="btn" data-confirm="Generate a new random secret? Existing links stop working.">Regenerate</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="card">
+    <div class="card-head"><h2>Username and password</h2></div>
+    <p class="muted">Used by SOCKS5 and HTTP. Letters, digits and . _ ~ - only, up to 64 characters.</p>
+    <form method="POST" action="<%= panelPath %>/settings/credentials">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+      <div class="two-col">
+        <div>
+          <label for="proxy-user">Username</label>
+          <input type="text" id="proxy-user" name="user" value="<%= settings.proxyUser %>" maxlength="64" spellcheck="false" autocomplete="off" />
+        </div>
+        <div>
+          <label for="proxy-pass">Password</label>
+          <input type="text" id="proxy-pass" name="pass" value="<%= settings.proxyPass %>" maxlength="64" spellcheck="false" autocomplete="off" />
+        </div>
+      </div>
+      <div class="btn-row">
+        <button type="submit" name="action" value="save" class="btn btn-accent">Save</button>
+        <button type="submit" name="action" value="regenerate" class="btn" data-confirm="Generate a new random username and password? Existing logins stop working.">Regenerate</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <h2>Usage</h2>
+      <span class="badge on"><span id="u-live"><%= usage.live %></span> connected now</span>
+    </div>
+    <div class="table-wrap">
+      <table class="usage">
+        <thead><tr><th>Protocol</th><th>Upload</th><th>Download</th><th>Connections</th></tr></thead>
+        <tbody>
+          <% modes.forEach(function (m) { %>
+            <tr>
+              <td><%= labels[m] %></td>
+              <td id="u-<%= m %>-up"><%= fmt(usage.modes[m].up) %></td>
+              <td id="u-<%= m %>-down"><%= fmt(usage.modes[m].down) %></td>
+              <td id="u-<%= m %>-connections"><%= usage.modes[m].connections %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td>Total</td>
+            <td id="u-total-up"><%= fmt(usage.total.up) %></td>
+            <td id="u-total-down"><%= fmt(usage.total.down) %></td>
+            <td id="u-total-connections"><%= usage.total.connections %></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </section>
+</main>
+
+<dialog id="qr-modal" class="modal" aria-labelledby="qr-title">
+  <h3 id="qr-title">Scan to connect</h3>
+  <div class="qr" id="qr-img"></div>
+  <div class="btn-row"><button type="button" class="btn" data-close>Close</button></div>
+</dialog>
+
+<dialog id="confirm-modal" class="modal" aria-labelledby="confirm-title">
+  <h3 id="confirm-title">Are you sure?</h3>
+  <p id="confirm-text" class="muted"></p>
+  <div class="btn-row">
+    <button type="button" class="btn btn-accent" id="confirm-ok">Continue</button>
+    <button type="button" class="btn" data-close>Cancel</button>
+  </div>
+</dialog>
+
+<dialog id="password-modal" class="modal" aria-labelledby="password-title">
+  <h3 id="password-title">Change password</h3>
+  <p class="error" id="password-error" hidden></p>
+  <label for="current-password">Current password</label>
+  <input type="password" id="current-password" autocomplete="current-password" />
+  <label for="new-password">New password</label>
+  <input type="password" id="new-password" autocomplete="new-password" />
+  <div class="btn-row">
+    <button type="button" class="btn btn-accent" id="password-save">Save</button>
+    <button type="button" class="btn" data-close>Cancel</button>
+  </div>
+</dialog>
+
+<input type="hidden" id="csrf-token" value="<%= csrfToken %>" />
+<input type="hidden" id="panel-path" value="<%= panelPath %>" />
+<script src="<%= panelPath %>/assets/js/qr.js?v=<%= version %>"></script>
+<script src="<%= panelPath %>/assets/js/dashboard.js?v=<%= version %>"></script>
+<%- include('partials/footer') %>

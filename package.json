@@ -1,0 +1,27 @@
+{
+  "name": "solo-proxy",
+  "version": "1.0.0",
+  "description": "Telegram proxy panel (Web, MTProto, SOCKS5, HTTP) deployable on Railway.com",
+  "private": true,
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "ejs": "^6.0.1",
+    "better-sqlite3": "^11.3.0",
+    "express-session": "^1.19.0",
+    "bcryptjs": "^3.0.3",
+    "ws": "^8.18.0"
+  },
+  "allowScripts": {
+    "better-sqlite3": true
+  },
+  "overrides": {
+    "body-parser": "^1.20.6"
+  }
+}
