@@ -14,7 +14,7 @@ The Web proxy is a Node port of the CF Proxy Cloudflare Worker, including its de
 ## Deploy on Railway
 
 1. Create a new Railway project from this repository.
-2. **Add a Volume** to the service, mounted at `/app/data`. It holds the database (settings, secret, statistics).
+2. **Add a Volume** to the service, mounted at `/data`. It holds the database (settings, secret, statistics).
 3. Under **Settings → Networking**, generate a public domain.
 4. For MTProto, SOCKS5 or HTTP, also add a **TCP Proxy** with application port `8443` (the `PROXY_PORT` default). The Web proxy does not need it.
 5. Set the variable `ADMIN_PASSWORD` before the first start. Without it the password is `admin`.
@@ -31,6 +31,7 @@ The decoy page is served at `/`; the panel lives only under `/panel`.
 | `DATA_DIR` | Database folder | Volume mount path, else `./data` |
 | `SECRET` | Initial proxy secret, 32 hex characters (first start only) | random |
 | `PROXY_PORT` | Port of the TCP listener for MTProto, SOCKS5 and HTTP | `8443` |
+| `PUBLIC_TCP_HOST`, `PUBLIC_TCP_PORT` | Manual TCP Proxy address from Railway; use only if the panel does not detect the TCP Proxy | unset |
 
 `PORT` is set by Railway.
 

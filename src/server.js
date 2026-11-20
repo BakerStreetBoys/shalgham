@@ -208,6 +208,14 @@ const server = http.createServer(app);
 server.on('upgrade', relay.upgrade);
 server.listen(HTTP_PORT, '0.0.0.0', () => console.log(`${APP_NAME} panel listening on port ${HTTP_PORT}`));
 
+// Startup diagnostic: shows whether Railway gave this deployment a TCP Proxy address.
+console.log(
+  `TCP Proxy variables: RAILWAY_TCP_PROXY_DOMAIN=${process.env.RAILWAY_TCP_PROXY_DOMAIN || '(unset)'} ` +
+    `RAILWAY_TCP_PROXY_PORT=${process.env.RAILWAY_TCP_PROXY_PORT || '(unset)'} ` +
+    `RAILWAY_TCP_APPLICATION_PORT=${process.env.RAILWAY_TCP_APPLICATION_PORT || '(unset)'} ` +
+    `PROXY_PORT=${PROXY_PORT}`
+);
+
 stats.start();
 runtime.apply();
 

@@ -8,12 +8,13 @@ const { linkSecret } = require('./tokens');
 
 const onRailway = Boolean(process.env.RAILWAY_PROJECT_ID);
 
-// Public address of the raw TCP listener: the Railway TCP Proxy when present,
-// otherwise this host and the local listener port (local development).
+// Public address of the raw TCP listener, in this order: the Railway TCP Proxy variables,
+// the manual PUBLIC_TCP_HOST / PUBLIC_TCP_PORT variables (for when Railway does not provide
+// the first pair), otherwise this host and the local listener port (local development).
 function tcpEndpoint(hostname) {
-  const railwayHost = process.env.RAILWAY_TCP_PROXY_DOMAIN;
-  const railwayPort = process.env.RAILWAY_TCP_PROXY_PORT;
-  if (railwayHost && railwayPort) return { host: railwayHost, port: railwayPort, ready: true };
+  const host = process.env.RAILWAY_TCP_PROXY_DOMAIN || process.env.PUBLIC_TCP_HOST;
+  const port = process.env.RAILWAY_TCP_PROXY_PORT || process.env.PUBLIC_TCP_PORT;
+  if (host && port) return { host, port, ready: true };
   return { host: hostname, port: String(PROXY_PORT), ready: !onRailway };
 }
 
