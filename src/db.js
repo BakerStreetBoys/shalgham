@@ -55,6 +55,22 @@ db.exec(`
   );
 `);
 
+// Usage counters per client IP address (see stats.js). last_seen is a Unix time in milliseconds.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS usage_ip (
+    ip TEXT PRIMARY KEY,
+    up_bytes INTEGER NOT NULL DEFAULT 0,
+    down_bytes INTEGER NOT NULL DEFAULT 0,
+    connections INTEGER NOT NULL DEFAULT 0,
+    last_seen INTEGER NOT NULL DEFAULT 0,
+    country TEXT
+  );
+`);
+// Databases created before the country column existed need it added once.
+if (!db.prepare('PRAGMA table_info(usage_ip)').all().some((column) => column.name === 'country')) {
+  db.exec('ALTER TABLE usage_ip ADD COLUMN country TEXT');
+}
+
 // Read a value from `app_config`, or null if never set.
 function getConfigValue(key) {
   const row = db.prepare('SELECT value FROM app_config WHERE key = ?').get(key);

@@ -64,7 +64,8 @@ function parseFrames(buf, handle) {
   }
 }
 
-function session(ws) {
+// clientIp is the address of the WebSocket's client, used for per-IP usage statistics.
+function session(ws, clientIp) {
   const streams = new Map();
   const closed = new Set(); // recently closed ids, so late frames can be ignored
   log('session_start', {});
@@ -179,7 +180,7 @@ function session(ws) {
         out: [],
         link: null,
         upstream: null,
-        meter: stats.open('web'),
+        meter: stats.open('web', clientIp),
         closed: false,
       });
     } else if (!st) {
@@ -237,7 +238,10 @@ function upgrade(req, socket, head) {
   const proto = offered.find((s) => s.startsWith(WS_SUBPROTOCOL));
   if (!proto || !validToken(TOKEN_SCOPE.ws, proto.slice(WS_SUBPROTOCOL.length))) return reject(socket);
 
-  wss.handleUpgrade(req, socket, head, (ws) => session(ws));
+  // Behind Railway's proxy the real client is the first X-Forwarded-For entry.
+  const forwarded = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+  const clientIp = forwarded || req.socket.remoteAddress;
+  wss.handleUpgrade(req, socket, head, (ws) => session(ws, clientIp));
 }
 
 // Closes every relay session (used when the mode changes or the proxy is disabled).

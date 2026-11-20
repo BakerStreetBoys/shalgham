@@ -260,6 +260,7 @@ input.mono { font-family: var(--font-mono); font-size: 14px; }
 .usage th, .usage td { padding: 9px 10px; text-align: left; border-bottom: 1px solid var(--border-soft); white-space: nowrap; }
 .usage th { color: var(--text-muted); font-weight: 500; font-size: 13px; }
 .usage tfoot td { border-bottom: 0; font-weight: 500; color: var(--accent); }
+.flag { width: 24px; height: 18px; margin-right: 8px; vertical-align: middle; object-fit: cover; border-radius: 3px; }
 
 /* ----- Dialogs ----- */
 .modal {
@@ -286,4 +287,5 @@ input.mono { font-family: var(--font-mono); font-size: 14px; }
   .two-col { grid-template-columns: 1fr; }
   .field { grid-template-columns: 1fr; gap: 2px; }
   .card { padding: 18px; }
+  .flag { width: 30px; height: 22px; }
 }

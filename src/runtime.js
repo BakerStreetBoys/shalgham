@@ -21,7 +21,8 @@ function onConnection(mode, socket) {
   sockets.add(socket);
   socket.on('close', () => sockets.delete(socket));
   const settings = getSettings();
-  const meter = stats.open(mode);
+  // remoteAddress may be a Railway TCP Proxy address rather than the real client when Railway hides it.
+  const meter = stats.open(mode, socket.remoteAddress);
   if (mode === 'mtproto') mtproto.handle(socket, Buffer.from(settings.secret, 'hex'), meter);
   else if (mode === 'socks5') socks5.handle(socket, settings, meter);
   else httpProxy.handle(socket, settings, meter);

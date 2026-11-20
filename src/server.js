@@ -34,6 +34,7 @@ const { sendNotFound } = require('./web/pages');
 const { sendDecoy } = require('./web/decoy');
 const { isBridge, sendBridge } = require('./web/bridge');
 const relay = require('./web/relay');
+const { getFlag } = require('./flags');
 const { version } = require('../package.json');
 
 const MIN_PASSWORD_LENGTH = 6;
@@ -128,6 +129,19 @@ panel.get('/', requireAuth, (req, res) => {
 });
 
 panel.get('/api/stats', requireAuth, (req, res) => res.json(stats.snapshot()));
+
+// Country flag images: downloaded once, then served from the Volume cache (see flags.js).
+panel.get('/flags/:code.svg', requireAuth, async (req, res) => {
+  const image = await getFlag(req.params.code);
+  if (!image) return res.sendStatus(404);
+  res.set({
+    'Content-Type': 'image/svg+xml',
+    'Cache-Control': 'private, max-age=86400',
+    'X-Content-Type-Options': 'nosniff',
+    'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'", // no scripts even if opened directly
+  });
+  res.send(image);
+});
 
 // Radio buttons (active protocol) and the enable switch.
 panel.post('/settings/mode', requireAuth, requireCsrf, (req, res) => {

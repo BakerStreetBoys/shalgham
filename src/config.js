@@ -3,11 +3,16 @@
 
 const APP_NAME = 'SOLO Proxy';
 
-// Port of the public HTTP server (Railway requirement: listen on 0.0.0.0:$PORT).
-const HTTP_PORT = Number(process.env.PORT) || 3000;
 // Port of the raw TCP listener used by the MTProto, SOCKS5 and HTTP modes.
 // On Railway, the service's TCP Proxy must point at this application port.
 const PROXY_PORT = Number(process.env.PROXY_PORT) || 8443;
+
+// Port of the public HTTP server (panel, web proxy). Railway may provide a PORT equal to the
+// TCP Proxy application port; the two listeners cannot share a port, so that value is ignored
+// and the default is used. Set the domain's target port in Railway to this default.
+const DEFAULT_HTTP_PORT = 8080;
+const envHttpPort = Number(process.env.PORT);
+const HTTP_PORT = envHttpPort && envHttpPort !== PROXY_PORT ? envHttpPort : DEFAULT_HTTP_PORT;
 
 // Proxy modes. Exactly one is active at a time (chosen with radio buttons).
 const MODES = ['web', 'mtproto', 'socks5', 'http'];

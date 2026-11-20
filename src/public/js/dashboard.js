@@ -150,6 +150,41 @@
     var el = document.getElementById(id);
     if (el) el.textContent = text;
   }
+  // Rebuilds the per-client table. Cells are filled with textContent, so IPs are never parsed as HTML.
+  function renderClients(clients) {
+    var body = document.getElementById('u-clients');
+    if (!body) return;
+    body.textContent = '';
+    if (!clients.length) {
+      var empty = body.insertRow();
+      var cell = empty.insertCell();
+      cell.colSpan = 4;
+      cell.className = 'muted';
+      cell.textContent = 'No clients yet.';
+      return;
+    }
+    clients.forEach(function (client) {
+      var row = body.insertRow();
+      var ip = document.createElement('code');
+      ip.textContent = client.ip;
+      var ipCell = row.insertCell();
+      if (client.country) {
+        var flag = document.createElement('img');
+        flag.className = 'flag';
+        flag.src = panelPath + '/flags/' + client.country.toLowerCase() + '.svg';
+        flag.alt = client.country;
+        flag.title = client.country;
+        flag.width = 24;
+        flag.height = 18;
+        ipCell.appendChild(flag);
+        ipCell.appendChild(document.createTextNode(' '));
+      }
+      ipCell.appendChild(ip);
+      row.insertCell().textContent = formatBytes(client.up);
+      row.insertCell().textContent = formatBytes(client.down);
+      row.insertCell().textContent = client.connections;
+    });
+  }
   function refreshUsage() {
     fetch(panelPath + '/api/stats', { credentials: 'same-origin' })
       .then(function (res) { return res.ok ? res.json() : null; })
@@ -164,6 +199,7 @@
         setText('u-total-up', formatBytes(data.total.up));
         setText('u-total-down', formatBytes(data.total.down));
         setText('u-total-connections', data.total.connections);
+        renderClients(data.clients || []);
       })
       .catch(function () { /* ignored: the next poll retries */ });
   }
