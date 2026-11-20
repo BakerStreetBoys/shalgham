@@ -167,7 +167,9 @@
       var row = body.insertRow();
       var ip = document.createElement('code');
       ip.textContent = client.ip;
-      var ipCell = row.insertCell();
+      var wrap = document.createElement('span'); // keeps the flag and the IP on one line
+      wrap.className = 'client';
+      row.insertCell().appendChild(wrap);
       if (client.country) {
         var flag = document.createElement('img');
         flag.className = 'flag';
@@ -176,10 +178,9 @@
         flag.title = client.country;
         flag.width = 24;
         flag.height = 18;
-        ipCell.appendChild(flag);
-        ipCell.appendChild(document.createTextNode(' '));
+        wrap.appendChild(flag);
       }
-      ipCell.appendChild(ip);
+      wrap.appendChild(ip);
       row.insertCell().textContent = formatBytes(client.up);
       row.insertCell().textContent = formatBytes(client.down);
       row.insertCell().textContent = client.connections;

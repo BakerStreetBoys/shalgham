@@ -1,4 +1,4 @@
-// Shared helpers of the SOCKS5 and HTTP proxies: the Telegram-only
+// Shared helpers of the SOCKS5 proxy: the Telegram-only
 // destination allowlist, an exact-length reader, and a two-way relay.
 'use strict';
 
@@ -62,6 +62,7 @@ function safeEqual(a, b) {
 function openTarget(host, port) {
   return new Promise((resolve, reject) => {
     if (!isTelegramAddress(host) || !isTelegramPort(port)) {
+      console.log(`[proxy] destination denied: ${host}:${port}`);
       const err = new Error('destination not allowed');
       err.reason = 'denied';
       return reject(err);
@@ -69,6 +70,7 @@ function openTarget(host, port) {
     const target = net.connect({ host, port });
     target.setNoDelay(true);
     const fail = (err) => {
+      console.log(`[proxy] connect failed: ${host}:${port} (${err.code || err.message})`);
       target.destroy();
       err.reason = 'failed';
       reject(err);

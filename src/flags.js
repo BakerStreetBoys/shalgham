@@ -8,6 +8,7 @@ const https = require('https');
 const { DATA_DIR } = require('./db');
 
 const FLAG_DIR = path.join(DATA_DIR, 'flags');
+const ASSET_DIR = path.join(__dirname, 'assets', 'flags'); // flags bundled with the app; never downloaded
 const FLAG_URL = 'https://flagcdn.com/'; // SVG flags: sharp at any size, so one file serves every screen
 const TIMEOUT_MS = 8 * 1000;
 const MAX_BYTES = 500 * 1024;
@@ -55,10 +56,30 @@ async function fetchAndStore(code, file) {
   return image;
 }
 
+// Deletes any downloaded copy of a bundled flag from the Volume cache, so the bundled file is
+// the only version ever served.
+function purgeCachedBundledFlags() {
+  try {
+    for (const name of fs.readdirSync(ASSET_DIR)) {
+      if (!name.endsWith('.svg')) continue;
+      fs.rmSync(path.join(FLAG_DIR, name), { force: true });
+    }
+  } catch {
+    /* no bundled flags or no cache folder: nothing to delete */
+  }
+}
+
+purgeCachedBundledFlags();
+
 // Returns the SVG of a country flag (two-letter code, any case), or null when it is unavailable.
 async function getFlag(rawCode) {
   const code = String(rawCode || '').toLowerCase();
   if (!CODE_RE.test(code)) return null;
+  try {
+    return await fs.promises.readFile(path.join(ASSET_DIR, `${code}.svg`));
+  } catch {
+    /* not a bundled flag */
+  }
   const file = path.join(FLAG_DIR, `${code}.svg`);
   try {
     return await fs.promises.readFile(file);

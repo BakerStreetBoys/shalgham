@@ -45,14 +45,6 @@ function describeActive(hostname) {
       { label: 'Username', value: proxyUser },
       { label: 'Password', value: proxyPass },
     ];
-  } else {
-    // HTTP proxies have no tg:// link; the fields are entered by hand in Telegram Desktop.
-    base.fields = [
-      { label: 'Server', value: tcp.host },
-      { label: 'Port', value: tcp.port },
-      { label: 'Username', value: proxyUser },
-      { label: 'Password', value: proxyPass },
-    ];
   }
   return base;
 }

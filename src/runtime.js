@@ -1,5 +1,5 @@
-// Applies the current settings: runs the raw TCP listener of the MTProto,
-// SOCKS5 and HTTP modes, and closes web relay sessions when the web mode is off.
+// Applies the current settings: runs the raw TCP listener of the MTProto
+// and SOCKS5 modes, and closes web relay sessions when the web mode is off.
 // Exactly one protocol is active at a time (the radio button in the panel).
 'use strict';
 
@@ -10,7 +10,6 @@ const stats = require('./stats');
 const relay = require('./web/relay');
 const mtproto = require('./proxies/mtproto');
 const socks5 = require('./proxies/socks5');
-const httpProxy = require('./proxies/http');
 
 let server = null;
 let serverMode = null;
@@ -25,7 +24,6 @@ function onConnection(mode, socket) {
   const meter = stats.open(mode, socket.remoteAddress);
   if (mode === 'mtproto') mtproto.handle(socket, Buffer.from(settings.secret, 'hex'), meter);
   else if (mode === 'socks5') socks5.handle(socket, settings, meter);
-  else httpProxy.handle(socket, settings, meter);
 }
 
 function stopTcp() {

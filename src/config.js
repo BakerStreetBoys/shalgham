@@ -3,7 +3,7 @@
 
 const APP_NAME = 'SOLO Proxy';
 
-// Port of the raw TCP listener used by the MTProto, SOCKS5 and HTTP modes.
+// Port of the raw TCP listener used by the MTProto and SOCKS5 modes.
 // On Railway, the service's TCP Proxy must point at this application port.
 const PROXY_PORT = Number(process.env.PROXY_PORT) || 8443;
 
@@ -15,18 +15,16 @@ const envHttpPort = Number(process.env.PORT);
 const HTTP_PORT = envHttpPort && envHttpPort !== PROXY_PORT ? envHttpPort : DEFAULT_HTTP_PORT;
 
 // Proxy modes. Exactly one is active at a time (chosen with radio buttons).
-const MODES = ['web', 'mtproto', 'socks5', 'http'];
+const MODES = ['web', 'mtproto', 'socks5'];
 const MODE_LABELS = {
   web: 'Web proxy',
   mtproto: 'MTProto',
   socks5: 'SOCKS5',
-  http: 'HTTP',
 };
 const MODE_HINTS = {
   web: 'HTTPS + WebSocket on the public domain. No TCP Proxy needed.',
   mtproto: 'Raw TCP through the Railway TCP Proxy. Uses the secret.',
   socks5: 'Raw TCP through the Railway TCP Proxy. Uses username and password.',
-  http: 'Raw TCP through the Railway TCP Proxy. Uses username and password.',
 };
 const isTcpMode = (mode) => mode !== 'web';
 
@@ -56,7 +54,7 @@ const TG_DC = {
 };
 
 // Official Telegram address ranges (https://core.telegram.org/resources/cidr.txt).
-// SOCKS5 and HTTP proxies refuse every other destination.
+// SOCKS5 proxy refuses every other destination.
 const TELEGRAM_CIDRS = [
   '91.105.192.0/23',
   '91.108.4.0/22',

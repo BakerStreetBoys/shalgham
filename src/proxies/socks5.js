@@ -24,6 +24,7 @@ function ipv6FromBytes(bytes) {
 // settings: { proxyUser, proxyPass }; meter: stats connection tracker.
 async function handle(socket, settings, meter) {
   const reader = createReader(socket);
+  const log = (message) => console.log(`[socks5] ${socket.remoteAddress}: ${message}`);
   const abort = () => {
     socket.destroy();
     meter.close();
@@ -35,6 +36,7 @@ async function handle(socket, settings, meter) {
     const [version, count] = await reader.read(2);
     const methods = await reader.read(count);
     if (version !== VERSION || !methods.includes(METHOD_USER_PASS)) {
+      log(`rejected: version ${version}, auth methods [${[...methods].join(',')}], username/password (2) not offered`);
       socket.end(Buffer.from([VERSION, METHOD_NONE_ACCEPTABLE]));
       return meter.close();
     }
@@ -48,6 +50,7 @@ async function handle(socket, settings, meter) {
     const userOk = safeEqual(user, settings.proxyUser);
     const passOk = safeEqual(pass, settings.proxyPass);
     if (!(userOk && passOk)) {
+      log(`rejected: wrong credentials (username ${userOk ? 'ok' : 'wrong'}, password ${passOk ? 'ok' : 'wrong'})`);
       socket.end(Buffer.from([0x01, 0x01]));
       return meter.close();
     }
@@ -57,6 +60,7 @@ async function handle(socket, settings, meter) {
     const [reqVersion, command, , addressType] = await reader.read(4);
     if (reqVersion !== VERSION) return abort();
     if (command !== CMD_CONNECT) {
+      log(`rejected: unsupported command ${command}`);
       socket.end(reply(REPLY.badCommand));
       return meter.close();
     }
@@ -64,6 +68,7 @@ async function handle(socket, settings, meter) {
     if (addressType === ATYP.ipv4) host = (await reader.read(4)).join('.');
     else if (addressType === ATYP.ipv6) host = ipv6FromBytes(await reader.read(16));
     else {
+      log(`rejected: address type ${addressType} (domain names are not resolved)`);
       socket.end(reply(REPLY.badAddress)); // domain names are not resolved: Telegram sends IPs
       return meter.close();
     }

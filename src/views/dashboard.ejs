@@ -39,9 +39,6 @@
         <button type="button" class="btn" data-copy="<%= active.link %>">Copy link</button>
         <button type="button" class="btn" id="open-qr" data-link="<%= active.link %>">QR code</button>
       </div>
-    <% } else { %>
-      <p class="muted">Telegram has no link for this protocol. In Telegram Desktop open Settings &rarr; Advanced
-        &rarr; Connection type &rarr; Use custom proxy, choose HTTP and enter the values below.</p>
     <% } %>
 
     <dl class="fields">
@@ -94,7 +91,7 @@
 
   <section class="card">
     <div class="card-head"><h2>Username and password</h2></div>
-    <p class="muted">Used by SOCKS5 and HTTP. Letters, digits and . _ ~ - only, up to 64 characters.</p>
+    <p class="muted">Used by SOCKS5. Letters, digits and . _ ~ - only, up to 64 characters.</p>
     <form method="POST" action="<%= panelPath %>/settings/credentials">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
       <div class="two-col">
@@ -153,10 +150,10 @@
         <tbody id="u-clients">
           <% usage.clients.forEach(function (c) { %>
             <tr>
-              <td>
+              <td><span class="client">
                 <% if (c.country) { %><img class="flag" src="<%= panelPath %>/flags/<%= c.country.toLowerCase() %>.svg" alt="<%= c.country %>" title="<%= c.country %>" width="24" height="18" loading="lazy" /><% } %>
                 <code><%= c.ip %></code>
-              </td>
+              </span></td>
               <td><%= fmt(c.up) %></td>
               <td><%= fmt(c.down) %></td>
               <td><%= c.connections %></td>

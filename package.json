@@ -1,7 +1,7 @@
 {
   "name": "solo-proxy",
-  "version": "1.0.0",
-  "description": "Telegram proxy panel (Web, MTProto, SOCKS5, HTTP) deployable on Railway.com",
+  "version": "1.0.1",
+  "description": "Telegram proxy panel (Web, MTProto, SOCKS5) deployable on Railway.com",
   "private": true,
   "main": "src/server.js",
   "scripts": {

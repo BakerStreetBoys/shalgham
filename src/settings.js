@@ -1,5 +1,5 @@
 // Proxy settings stored in app_config: active mode, enabled flag, the secret
-// and the SOCKS5/HTTP credentials. Values are cached in memory; every setter
+// and the SOCKS5 credentials. Values are cached in memory; every setter
 // writes through to the database.
 'use strict';
 
@@ -8,7 +8,7 @@ const { getConfigValue, setConfigValue } = require('./db');
 const { MODES } = require('./config');
 
 const SECRET_RE = /^[0-9a-f]{32}$/; // 16 bytes as hex
-const CREDENTIAL_RE = /^[A-Za-z0-9._~-]{1,64}$/; // safe inside tg:// links and HTTP basic auth
+const CREDENTIAL_RE = /^[A-Za-z0-9._~-]{1,64}$/; // safe inside tg:// links
 
 const randomHex = (bytes) => crypto.randomBytes(bytes).toString('hex');
 
