@@ -4,7 +4,7 @@
 
 const { db } = require('./db');
 const { MODES } = require('./config');
-const { lookupCountry } = require('./geo');
+const { lookupCountry, isPublicIp } = require('./geo');
 
 const FLUSH_INTERVAL_MS = 30 * 1000;
 const MAX_CLIENTS = 500; // client IPs kept; the least recently seen one is dropped beyond this
@@ -80,28 +80,36 @@ function resolveCountry(ip, client) {
 function open(mode, ip) {
   const entry = totals[mode];
   const clientIp = normalizeIp(ip);
-  const client = clientFor(clientIp);
-  if (!client.country) resolveCountry(clientIp, client);
+  // Private, shared (CGNAT), loopback and unknown addresses (for example Railway's TCP Proxy) are
+  // not real users: they count in the mode totals only and never get a row in the Clients table.
+  const client = isPublicIp(clientIp) ? clientFor(clientIp) : null;
+  if (client && !client.country) resolveCountry(clientIp, client);
   entry.connections++;
-  client.connections++;
-  client.lastSeen = Date.now();
-  dirtyIps.add(clientIp);
+  if (client) {
+    client.connections++;
+    client.lastSeen = Date.now();
+    dirtyIps.add(clientIp);
+  }
   live++;
   dirty = true;
   let closed = false;
   return {
     up(bytes) {
       entry.up += bytes;
-      client.up += bytes;
-      client.lastSeen = Date.now();
-      dirtyIps.add(clientIp);
+      if (client) {
+        client.up += bytes;
+        client.lastSeen = Date.now();
+        dirtyIps.add(clientIp);
+      }
       dirty = true;
     },
     down(bytes) {
       entry.down += bytes;
-      client.down += bytes;
-      client.lastSeen = Date.now();
-      dirtyIps.add(clientIp);
+      if (client) {
+        client.down += bytes;
+        client.lastSeen = Date.now();
+        dirtyIps.add(clientIp);
+      }
       dirty = true;
     },
     close() {
@@ -123,15 +131,18 @@ function snapshot() {
     down += totals[mode].down;
     connections += totals[mode].connections;
   }
-  // Client IPs, the heaviest users first.
-  const byClient = Array.from(clients, ([ip, c]) => ({
-    ip,
-    up: c.up,
-    down: c.down,
-    connections: c.connections,
-    lastSeen: c.lastSeen,
-    country: c.country,
-  })).sort((a, b) => b.up + b.down - (a.up + a.down));
+  // Client IPs, the heaviest users first. Non-public rows stored by older versions are hidden.
+  const byClient = Array.from(clients)
+    .filter(([ip]) => isPublicIp(ip))
+    .map(([ip, c]) => ({
+      ip,
+      up: c.up,
+      down: c.down,
+      connections: c.connections,
+      lastSeen: c.lastSeen,
+      country: c.country,
+    }))
+    .sort((a, b) => b.up + b.down - (a.up + a.down));
   return { live, modes, total: { up, down, connections }, clients: byClient };
 }
 

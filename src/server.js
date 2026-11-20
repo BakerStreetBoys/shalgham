@@ -2,6 +2,9 @@
 // the password-protected panel under /panel. The TCP proxies are started by runtime.js.
 'use strict';
 
+// Keep a copy of the log for the panel before any other module can write to it.
+require('./logs').capture();
+
 const path = require('path');
 const http = require('http');
 const express = require('express');
@@ -35,6 +38,7 @@ const { sendDecoy } = require('./web/decoy');
 const { isBridge, sendBridge } = require('./web/bridge');
 const relay = require('./web/relay');
 const { getFlag } = require('./flags');
+const { getLines } = require('./logs');
 const { version } = require('../package.json');
 
 const MIN_PASSWORD_LENGTH = 6;
@@ -130,6 +134,12 @@ panel.get('/', requireAuth, (req, res) => {
 
 panel.get('/api/stats', requireAuth, (req, res) => res.json(stats.snapshot()));
 
+// Recent server log lines (see logs.js) as plain text, oldest first.
+panel.get('/api/logs', requireAuth, (req, res) => {
+  res.set('X-Content-Type-Options', 'nosniff');
+  res.type('text/plain').send(getLines().join('\n'));
+});
+
 // Country flag images: downloaded once, then served from the Volume cache (see flags.js).
 panel.get('/flags/:code.svg', requireAuth, async (req, res) => {
   const image = await getFlag(req.params.code);
@@ -143,14 +153,14 @@ panel.get('/flags/:code.svg', requireAuth, async (req, res) => {
   res.send(image);
 });
 
-// Radio buttons (active protocol) and the enable switch.
+// Radio buttons (active protocol). Applying a protocol always turns the proxy on.
 panel.post('/settings/mode', requireAuth, requireCsrf, (req, res) => {
   if (!MODES.includes(req.body.mode)) {
     flash(req, 'error', 'Unknown protocol.');
     return backToPanel(res);
   }
   settings.setMode(req.body.mode);
-  settings.setEnabled(req.body.enabled === '1');
+  settings.setEnabled(true);
   runtime.restart();
   flash(req, 'success', 'Proxy settings applied.');
   backToPanel(res);

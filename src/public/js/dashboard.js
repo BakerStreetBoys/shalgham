@@ -1,4 +1,4 @@
-// Dashboard behavior: profile menu, copy buttons, QR, confirm dialog, password change, live usage.
+// Dashboard behavior: profile menu, copy buttons, QR, confirm dialog, password change, auto-hiding messages, live usage and log.
 (function () {
   'use strict';
 
@@ -139,6 +139,15 @@
       });
   });
 
+  // ----- Auto-hiding messages -----
+  // Messages such as "Proxy settings applied." fade out after 5 seconds (animation in style.css), then are removed.
+  Array.prototype.forEach.call(document.querySelectorAll('[data-autohide]'), function (notice) {
+    setTimeout(function () {
+      notice.classList.add('hiding');
+      setTimeout(function () { notice.remove(); }, 200);
+    }, 5000);
+  });
+
   // ----- Live usage -----
   function formatBytes(n) {
     var units = ['B', 'KB', 'MB', 'GB', 'TB'];
@@ -204,7 +213,38 @@
       })
       .catch(function () { /* ignored: the next poll retries */ });
   }
+  // ----- Server log -----
+  var logBox = $('#log-box');
+  var logCopyButton = $('#log-copy');
+  // True while the user has text selected inside the log box; auto refresh then waits so the selection is kept.
+  function logSelected() {
+    var selection = window.getSelection();
+    return Boolean(selection && !selection.isCollapsed && logBox.contains(selection.anchorNode));
+  }
+  function refreshLog() {
+    fetch(panelPath + '/api/logs', { credentials: 'same-origin' })
+      .then(function (res) { return res.ok ? res.text() : null; })
+      .then(function (text) {
+        if (text === null) return;
+        // Stay at the newest lines unless the user scrolled up to read.
+        var atBottom = logBox.scrollHeight - logBox.scrollTop - logBox.clientHeight < 24;
+        logBox.textContent = text || 'No log lines yet.';
+        if (atBottom) logBox.scrollTop = logBox.scrollHeight;
+      })
+      .catch(function () { /* ignored: the next poll retries */ });
+  }
+  $('#log-refresh').addEventListener('click', refreshLog);
+  logCopyButton.addEventListener('click', function () {
+    copyText(logBox.textContent).then(function (ok) {
+      logCopyButton.textContent = ok ? 'Copied' : 'Copy failed';
+      setTimeout(function () { logCopyButton.textContent = 'Copy all'; }, 1800);
+    });
+  });
+  refreshLog();
+
   setInterval(function () {
-    if (!document.hidden) refreshUsage();
+    if (document.hidden) return;
+    refreshUsage();
+    if (!logSelected()) refreshLog();
   }, 5000);
 })();

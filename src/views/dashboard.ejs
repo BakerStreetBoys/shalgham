@@ -16,7 +16,7 @@
     </div>
   <% } %>
   <% if (flash) { %>
-    <div class="notice <%= flash.type %>"><%= flash.message %></div>
+    <div class="notice <%= flash.type %>" data-autohide><%= flash.message %></div>
   <% } %>
 
   <section class="card">
@@ -53,6 +53,7 @@
 
   <section class="card">
     <div class="card-head"><h2>Protocol</h2></div>
+    <p class="muted">Only one protocol runs at a time. Applying disconnects everyone who is connected.</p>
     <form method="POST" action="<%= panelPath %>/settings/mode">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
       <div class="mode-list" role="radiogroup" aria-label="Active protocol">
@@ -66,12 +67,9 @@
           </label>
         <% }) %>
       </div>
-      <label class="switch-row">
-        <input type="checkbox" name="enabled" value="1" <%= settings.enabled ? 'checked' : '' %> />
-        <span>Proxy enabled</span>
-      </label>
-      <p class="muted">Only one protocol runs at a time. Applying disconnects everyone who is connected.</p>
-      <button type="submit" class="btn btn-accent">Apply</button>
+      <div class="btn-row">
+        <button type="submit" class="btn btn-accent">Apply</button>
+      </div>
     </form>
   </section>
 
@@ -112,6 +110,32 @@
   </section>
 
   <section class="card">
+    <div class="card-head"><h2>Clients</h2></div>
+    <p class="muted">Usage per client IP, heaviest first. Up to 500 IPs are kept. Behind Railway's TCP Proxy the address may be Railway's, not the client's.</p>
+    <div class="table-wrap">
+      <table class="usage">
+        <thead><tr><th>IP address</th><th>Upload</th><th>Download</th><th>Connections</th></tr></thead>
+        <tbody id="u-clients">
+          <% usage.clients.forEach(function (c) { %>
+            <tr>
+              <td><span class="client">
+                <% if (c.country) { %><img class="flag" src="<%= panelPath %>/flags/<%= c.country.toLowerCase() %>.svg" alt="<%= c.country %>" title="<%= c.country %>" width="24" height="18" loading="lazy" /><% } %>
+                <code><%= c.ip %></code>
+              </span></td>
+              <td><%= fmt(c.up) %></td>
+              <td><%= fmt(c.down) %></td>
+              <td><%= c.connections %></td>
+            </tr>
+          <% }) %>
+          <% if (!usage.clients.length) { %>
+            <tr><td colspan="4" class="muted">No clients yet.</td></tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card">
     <div class="card-head">
       <h2>Usage</h2>
       <span class="badge on"><span id="u-live"><%= usage.live %></span> connected now</span>
@@ -142,28 +166,12 @@
   </section>
 
   <section class="card">
-    <div class="card-head"><h2>Clients</h2></div>
-    <p class="muted">Usage per client IP, heaviest first. Up to 500 IPs are kept. Behind Railway's TCP Proxy the address may be Railway's, not the client's.</p>
-    <div class="table-wrap">
-      <table class="usage">
-        <thead><tr><th>IP address</th><th>Upload</th><th>Download</th><th>Connections</th></tr></thead>
-        <tbody id="u-clients">
-          <% usage.clients.forEach(function (c) { %>
-            <tr>
-              <td><span class="client">
-                <% if (c.country) { %><img class="flag" src="<%= panelPath %>/flags/<%= c.country.toLowerCase() %>.svg" alt="<%= c.country %>" title="<%= c.country %>" width="24" height="18" loading="lazy" /><% } %>
-                <code><%= c.ip %></code>
-              </span></td>
-              <td><%= fmt(c.up) %></td>
-              <td><%= fmt(c.down) %></td>
-              <td><%= c.connections %></td>
-            </tr>
-          <% }) %>
-          <% if (!usage.clients.length) { %>
-            <tr><td colspan="4" class="muted">No clients yet.</td></tr>
-          <% } %>
-        </tbody>
-      </table>
+    <div class="card-head"><h2>Logs</h2></div>
+    <p class="muted">The last 500 server log lines, oldest first (UTC). Kept in memory only, so a restart or redeploy clears them.</p>
+    <pre class="log-box" id="log-box" tabindex="0">Loading...</pre>
+    <div class="btn-row">
+      <button type="button" class="btn btn-accent" id="log-copy">Copy all</button>
+      <button type="button" class="btn" id="log-refresh">Refresh</button>
     </div>
   </section>
 </main>

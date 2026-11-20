@@ -36,11 +36,11 @@ The decoy page is served at `/`; the panel lives only under `/panel`.
 
 ## Panel
 
-- Switch the active protocol and enable or disable the proxy.
+- Switch the active protocol. Applying a protocol always turns the proxy on.
 - Change or regenerate the secret (Web proxy and MTProto).
 - Change or regenerate the username and password (SOCKS5).
-- Usage statistics per protocol: upload, download, connections.
 - Usage per client IP with its country flag (up to 500 IPs, heaviest first). The country comes from country.is and the flag images from flagcdn.com; each is fetched once and kept in the Volume. Behind Railway's TCP Proxy the IP may be Railway's, not the client's.
+- Usage statistics per protocol: upload, download, connections.
 - Link, copy button and QR code for the active protocol.
 
 Changing the protocol, the secret or the credentials disconnects everyone who is connected.
