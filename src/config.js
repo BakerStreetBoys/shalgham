@@ -39,7 +39,6 @@ const WS_SUBPROTOCOL = 'tproxy-v1.'; // prefix of the relay token in Sec-WebSock
 const DECOY_SECONDS = 20;
 const DECOY_URLS = [
   'https://fa.wikipedia.org/wiki/Special:Random',
-  'https://apps.apple.com/',
   'https://bale.ai/',
 ];
 
