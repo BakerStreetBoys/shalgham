@@ -36,7 +36,8 @@ async function handle(socket, settings, meter) {
     const [version, count] = await reader.read(2);
     const methods = await reader.read(count);
     if (version !== VERSION || !methods.includes(METHOD_USER_PASS)) {
-      log(`rejected: version ${version}, auth methods [${[...methods].join(',')}], username/password (2) not offered`);
+      // A first byte other than 5 is not SOCKS5 at all (for example an MTProto client that still points here): not logged.
+      if (version === VERSION) log(`rejected: username/password (2) not offered, methods [${[...methods].join(',')}]`);
       socket.end(Buffer.from([VERSION, METHOD_NONE_ACCEPTABLE]));
       return meter.close();
     }
@@ -55,6 +56,7 @@ async function handle(socket, settings, meter) {
       return meter.close();
     }
     socket.write(Buffer.from([0x01, 0x00]));
+    log('login ok');
 
     // Request.
     const [reqVersion, command, , addressType] = await reader.read(4);
